@@ -19,7 +19,7 @@ public class Installation {
     private boolean multiCommune;
     private int nbPlacesParking;
     private int nbPlacesParkingHandicapes;
-    private Date dateMiseAJourFiche;
+//    private Date dateMiseAJourFiche;
     private List<Equipement> equipements;
 
     public String getNumero() {
@@ -78,13 +78,13 @@ public class Installation {
         this.nbPlacesParkingHandicapes = nbPlacesParkingHandicapes;
     }
 
-    public Date getDateMiseAJourFiche() {
-        return dateMiseAJourFiche;
-    }
-
-    public void setDateMiseAJourFiche(Date dateMiseAJourFiche) {
-        this.dateMiseAJourFiche = dateMiseAJourFiche;
-    }
+//    public Date getDateMiseAJourFiche() {
+//        return dateMiseAJourFiche;
+//    }
+//
+//    public void setDateMiseAJourFiche(Date dateMiseAJourFiche) {
+//        this.dateMiseAJourFiche = dateMiseAJourFiche;
+//    }
 
     public List<Equipement> getEquipements() {
         return equipements;
