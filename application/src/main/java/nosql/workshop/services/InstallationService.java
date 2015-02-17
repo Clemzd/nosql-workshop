@@ -119,7 +119,10 @@ public class InstallationService {
 	 */
 	public List<Installation> search(String searchQuery) {
 		List<Installation> listInstall = new ArrayList<Installation>();
-		MongoCursor<Installation> search = this.installations.find("{$text: {$search:#}}", searchQuery).limit(10).as(Installation.class);
+		MongoCursor<Installation> search = this.installations.find("{$text: {$search:#, $language: 'french'}}", searchQuery)
+				.projection("{score: {$meta: 'textScore'}}")
+				.sort("{score: {$meta: 'textScore'}}")
+				.limit(10).as(Installation.class);
 		while (search.hasNext()) {
 			listInstall.add(search.next());
 		}
