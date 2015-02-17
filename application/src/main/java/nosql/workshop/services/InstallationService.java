@@ -30,17 +30,7 @@ public class InstallationService {
 	@Inject
 	public InstallationService(MongoDB mongoDB) throws UnknownHostException {
 		this.installations = mongoDB.getJongo().getCollection(COLLECTION_NAME);
-		this.installations.ensureIndex("{"
-			+ "nom : 'text',"
-			+ "adresse.commune : 'text'"
-			+ "},"
-			+ "{"
-			+   "weights : {"
-			+     "nom : 3,"
-			+     "adresse.commune : 10"
-			+ "},"
-			+ "default_language : 'french'"
-		+ "}");
+		this.installations.ensureIndex("{nom : 'text', adresse.commune : 'text'}", "{weights : {nom : 3, adresse.commune : 10}, default_language : 'french'}");
 		this.installations.ensureIndex("{location: '2dsphere'}");
 	}
 
