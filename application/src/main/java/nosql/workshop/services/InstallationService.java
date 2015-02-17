@@ -118,8 +118,13 @@ public class InstallationService {
 	 * @return les résultats correspondant à la requête.
 	 */
 	public List<Installation> search(String searchQuery) {
-		// TODO codez le service
-		throw new UnsupportedOperationException();
+		List<Installation> listInstall = new ArrayList<Installation>();
+		MongoCursor<Installation> search = this.installations.find("{$text: {$search:#}}", searchQuery).limit(10).as(Installation.class);
+		while (search.hasNext()) {
+			listInstall.add(search.next());
+		}
+
+		return listInstall;
 	}
 
 	/**
