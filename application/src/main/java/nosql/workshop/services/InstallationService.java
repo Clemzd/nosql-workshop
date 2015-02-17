@@ -33,8 +33,7 @@ public class InstallationService {
      * @return l'installation correspondante, ou <code>null</code> si non trouvée.
      */
     public Installation get(String numero) {
-        // TODO codez le service
-        throw new UnsupportedOperationException();
+    	return this.installations.findOne("{_id:#}", numero).as(Installation.class);
     }
 
     /**
