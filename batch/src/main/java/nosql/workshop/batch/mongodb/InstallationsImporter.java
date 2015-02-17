@@ -2,14 +2,11 @@ package nosql.workshop.batch.mongodb;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+
 import java.io.*;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.Date;
-import java.util.Random;
-import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
 /**
  * Importe les 'installations' dans MongoDB.
  */
@@ -36,8 +33,13 @@ public class InstallationsImporter {
         
         Date date = null;
         if (columns.length > 28) {
-//        	LocalDate tmp = LocalDate.parse(columns[28]);
-//     		date = new Date(tmp.toEpochDay());
+        	// TODO refaire (ca arrondit au jour d'avant à 22h, WTF !)
+        	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+     		try {
+				date = (Date)sdf.parse(columns[28]);
+			} catch (ParseException e) {
+				throw new RuntimeException("");
+			}
         }
         
        
