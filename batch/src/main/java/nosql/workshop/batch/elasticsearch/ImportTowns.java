@@ -48,5 +48,6 @@ public class ImportTowns {
         Double latitude = Double.valueOf(split[7]);
 
         // TODO ajoutez le code permettant d'insérer la ville
+        
     }
 }

@@ -30,6 +30,8 @@ public class InstallationService {
 	@Inject
 	public InstallationService(MongoDB mongoDB) throws UnknownHostException {
 		this.installations = mongoDB.getJongo().getCollection(COLLECTION_NAME);
+		this.installations.ensureIndex("{nom : 'text', adresse.commune : 'text'}", "{weights : {nom : 3, adresse.commune : 10}, default_language : 'french'}");
+		this.installations.ensureIndex("{location: '2dsphere'}");
 	}
 
 	/**
@@ -41,7 +43,6 @@ public class InstallationService {
 	 *         trouvée.
 	 */
 	public Installation get(String numero) {
-		// TODO codez le service
 		return this.installations.findOne("{_id:#}", numero).as(Installation.class);
 	}
 
@@ -55,7 +56,6 @@ public class InstallationService {
 	 * @return la liste des installations.
 	 */
 	public List<Installation> list(int page, int pageSize) {
-		// TODO codez le service
 		List<Installation> listInstall = new ArrayList<Installation>();
 		MongoCursor<Installation> all = this.installations.find()
 											.skip((page-1)*pageSize)
@@ -78,7 +78,6 @@ public class InstallationService {
 		long count = count();
 		int random = new Random().nextInt((int) count);
 
-		// TODO codez le service
 		return this.installations.find().skip(random).as(Installation.class).next();
 	}
 
@@ -98,7 +97,7 @@ public class InstallationService {
 	 */
 	public Installation installationWithMaxEquipments() {
 		Installation installation = this.installations
-				.aggregate("{$project:{nom:1, adresse:1, equipements:1, location:1, multiCommune:1,"
+				.aggregate("{$project:{name:1, adresse:1, equipements:1, location:1, multiCommune:1,"
 						+ "nbPlacesParking:1, nbPplacesParkingHandicapes:1, nbEqu:{$size:'$equipements'}}}")
 				.and("{$sort:{nbEqu:-1}}")
 				.and("{$limit:1}")
@@ -112,12 +111,8 @@ public class InstallationService {
 	 *
 	 * @return le nombre d'installations par activité.
 	 */
-	public List<CountByActivity> countByActivity() {		
-		return this.installations.aggregate("{ $unwind : '$equipements' }")
-							.and("{ $unwind : '$equipements.activites' }")
-							.and("{ $group : { _id: '$equipements.activites', total : { $sum:1 } } }")
-							.and("{ $project : { _id : 0, activite : '$_id', total : 1 } }")
-							.as(CountByActivity.class);
+	public List<CountByActivity> countByActivity() {
+		return Arrays.asList(new CountByActivity());
 	}
 
 	public double averageEquipmentsPerInstallation() {
@@ -144,7 +139,7 @@ public class InstallationService {
 		MongoCursor<Installation> search = this.installations.find("{$text: {$search:#, $language: 'french'}}", searchQuery)
 				.projection("{score: {$meta: 'textScore'}}")
 				.sort("{score: {$meta: 'textScore'}}")
-				.limit(10).as(Installation.class);
+				.as(Installation.class);
 		while (search.hasNext()) {
 			listInstall.add(search.next());
 		}
@@ -164,7 +159,12 @@ public class InstallationService {
 	 * @return les installations dans la zone géographique demandée.
 	 */
 	public List<Installation> geosearch(double lat, double lng, double distance) {
-		// TODO codez le service
-		throw new UnsupportedOperationException();
+		List<Installation> list = new ArrayList<Installation>();
+		MongoCursor<Installation> cursor = this.installations.find("{location: {$near: {$geometry: {type: 'Point', coordinates : [#, #]}, $maxDistance: #}}}}", lng, lat, distance).as(Installation.class);
+		while (cursor.hasNext()) {
+			list.add(cursor.next());
+		}
+
+		return list;
 	}
 }

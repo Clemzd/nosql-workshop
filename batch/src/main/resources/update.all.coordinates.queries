@@ -4864,8 +4864,6 @@ db.installations.update({_id : "531850007"}, {$set : {"location.coordinates" : [
 db.installations.update({_id : "531860001"}, {$set : {"location.coordinates" : [-0.80553446, 47.92373246]}})
 db.installations.update({_id : "531860004"}, {$set : {"location.coordinates" : [-0.80553446, 47.92373246]}})
 db.installations.update({_id : "531860006"}, {$set : {"location.coordinates" : [-0.80355992, 47.92466686]}})
-61420, Ravigny, route de Champfrémont 
-, Ravigny,  Le Bourg
 db.installations.update({_id : "531880006"}, {$set : {"location.coordinates" : [-1.050735, 47.799675]}})
 db.installations.update({_id : "531880007"}, {$set : {"location.coordinates" : [-1.12000544, 47.8116718]}})
 db.installations.update({_id : "531880008"}, {$set : {"location.coordinates" : [-1.05444279, 47.79061165]}})
