@@ -13,3 +13,5 @@ target/
 .java-version
 /pom.xml
 /README.md
+/.settings/
+/.project
