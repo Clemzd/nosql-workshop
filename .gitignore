@@ -11,3 +11,5 @@ target/
 
 # Jenv configuration (see http://www.jenv.be/)
 .java-version
+/pom.xml
+/README.md
