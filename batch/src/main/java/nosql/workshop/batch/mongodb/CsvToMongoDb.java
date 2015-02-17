@@ -22,7 +22,7 @@ public class CsvToMongoDb {
             // Import des données
             new InstallationsImporter(installationsCollection).run();
             new EquipementsImporter(installationsCollection).run();
-//            new ActivitesImporter(installationsCollection).run();
+            new ActivitesImporter(installationsCollection).run();
 
         } catch (Exception e) {
             e.printStackTrace();
