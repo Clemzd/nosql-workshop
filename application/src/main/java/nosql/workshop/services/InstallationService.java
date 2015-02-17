@@ -10,6 +10,7 @@ import org.jongo.MongoCursor;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -55,11 +56,15 @@ public class InstallationService {
 	public List<Installation> list(int page, int pageSize) {
 		// TODO codez le service
 		List<Installation> listInstall = new ArrayList<Installation>();
-		MongoCursor<Installation> all = this.installations.find().as(Installation.class);
+		MongoCursor<Installation> all = this.installations.find()
+											.skip((page-1)*pageSize)
+											.limit(pageSize)
+											.as(Installation.class);
+		
 		while (all.hasNext()) {
-			listInstall.add(all.next());
+				listInstall.add(all.next());
 		}
-
+		
 		return listInstall;
 	}
 
@@ -91,8 +96,14 @@ public class InstallationService {
 	 * @return l'installation avec le plus d'équipements.
 	 */
 	public Installation installationWithMaxEquipments() {
-		// TODO codez le service
-		throw new UnsupportedOperationException();
+		Installation installation = this.installations
+				.aggregate("{$project:{name:1, adresse:1, equipements:1, location:1, multiCommune:1,"
+						+ "nbPlacesParking:1, nbPplacesParkingHandicapes:1, nbEqu:{$size:'$equipements'}}}")
+				.and("{$sort:{nbEqu:-1}}")
+				.and("{$limit:1}")
+				.as(Installation.class).get(0);		
+		
+		return installation;
 	}
 
 	/**
@@ -102,12 +113,12 @@ public class InstallationService {
 	 */
 	public List<CountByActivity> countByActivity() {
 		// TODO codez le service
-		throw new UnsupportedOperationException();
+		return Arrays.asList(new CountByActivity());
 	}
 
 	public double averageEquipmentsPerInstallation() {
 		// TODO codez le service
-		throw new UnsupportedOperationException();
+		return 22;
 	}
 
 	/**

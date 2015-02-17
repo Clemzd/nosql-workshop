@@ -90,11 +90,13 @@ public class InstallationResource {
 
     @Get("/stats")
     public InstallationsStats stats() {
+    	System.out.println("ALLO");
         InstallationsStats stats = new InstallationsStats();
         stats.setTotalCount(installationService.count());
         stats.setCountByActivity(installationService.countByActivity());
         stats.setInstallationWithMaxEquipments(installationService.installationWithMaxEquipments());
         stats.setAverageEquipmentsPerInstallation(installationService.averageEquipmentsPerInstallation());
+        System.out.println("ALLO");
         return stats;
     }
 }
