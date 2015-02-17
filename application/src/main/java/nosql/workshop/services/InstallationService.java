@@ -3,6 +3,7 @@ package nosql.workshop.services;
 import com.google.inject.Inject;
 
 import nosql.workshop.model.Installation;
+import nosql.workshop.model.stats.Average;
 import nosql.workshop.model.stats.CountByActivity;
 
 import org.jongo.MongoCollection;
@@ -118,7 +119,15 @@ public class InstallationService {
 
 	public double averageEquipmentsPerInstallation() {
 		// TODO codez le service
-		return 22;
+		double avg = 0.00;
+		
+		avg = this.installations.aggregate("{$group: { _id: null, average: { $avg : {$size:'$equipements'} } } }")
+										.and("{ $project: {_id:0, average:1} }")
+										.as(Average.class)
+										.get(0)
+										.getAverage();
+		
+		return avg;
 	}
 
 	/**
