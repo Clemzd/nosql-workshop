@@ -56,7 +56,7 @@ public class InstallationsImporter {
         )
         .append("location", new BasicDBObject()
         					.append("type", "Point")
-        					.append("coordinates", new Float[] { Float.parseFloat(columns[9]), Float.parseFloat(columns[10]) })
+        					.append("coordinates", new Double[] { Double.parseDouble(columns[9]), Double.parseDouble(columns[10]) })
         )
         .append("multiCommune", (columns[16].equals("Non")) ? "false" : "true")
         .append("nbPlacesParking", columns[17])
