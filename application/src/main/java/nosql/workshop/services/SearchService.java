@@ -1,15 +1,22 @@
 package nosql.workshop.services;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+
 import nosql.workshop.model.Installation;
 import nosql.workshop.model.suggest.TownSuggest;
+
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +40,8 @@ public class SearchService {
 
     @Inject
     public SearchService(@Named(ES_HOST) String host, @Named(ES_TRANSPORT_PORT) int transportPort) {
-        elasticSearchClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(host, transportPort));
+        elasticSearchClient = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", "TheBestTocard")
+				.build()).addTransportAddress(new InetSocketTransportAddress(host, transportPort));
 
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -69,7 +77,20 @@ public class SearchService {
     }
 
     public Double[] getTownLocation(String townName) {
-        // TODO codez le service
-        throw new UnsupportedOperationException();
+    	SearchResponse response = elasticSearchClient.prepareSearch("towns")
+    								.setTypes("town")
+    								.setQuery("townName:"+townName)
+    								.execute()
+    								.actionGet();
+    	
+    	SearchHits searchHits = response.getHits();
+    	TownSuggest townSuggest = null;
+    	try {
+			townSuggest = objectMapper.readValue(searchHits.getHits()[0].getSourceAsString(), TownSuggest.class);
+    	 } catch (IOException e) {
+             throw new RuntimeException(e);
+         }
+    	
+       return townSuggest.getLocation();
     }
 }

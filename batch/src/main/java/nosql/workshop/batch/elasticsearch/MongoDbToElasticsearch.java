@@ -57,7 +57,7 @@ public class MongoDbToElasticsearch {
 										.endObject()
 							));
 				} catch (IOException e) {
-					e.printStackTrace();
+		             throw new RuntimeException(e);
 				}
             }
             BulkResponse bulkItemResponses = bulkRequest.execute().actionGet();

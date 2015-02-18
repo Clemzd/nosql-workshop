@@ -48,15 +48,14 @@ public class ImportTowns {
 		String townName = split[1].replaceAll("\"", "");
 		Double longitude = Double.valueOf(split[6]);
 		Double latitude = Double.valueOf(split[7]);
-
-		// TODO ajoutez le code permettant d'insérer la ville
+		
 		try {
 			bulkRequest.add(elasticSearchClient.prepareIndex("towns", "town").setSource(
-					jsonBuilder().startObject().field("townName", townName).field("longitude", longitude).field("latitude", latitude)
+					jsonBuilder().startObject().field("townName", townName)
+												.field("location", new Double[] { longitude, latitude })
 							.endObject()));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+            throw new RuntimeException(e);
 		}
 	}
 }
