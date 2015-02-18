@@ -1,11 +1,9 @@
 package nosql.workshop.services;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import nosql.workshop.model.Installation;
 import nosql.workshop.model.suggest.TownSuggest;
@@ -19,10 +17,10 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  *
@@ -59,13 +57,15 @@ public class SearchService {
 	public List<Installation> search(String searchQuery) {
 		List<Installation> listInstallations = new ArrayList<Installation>();
 		
-		SearchResponse response = elasticSearchClient.prepareSearch("installations")
-				.setQuery(QueryBuilders.multiMatchQuery(searchQuery))
+		SearchResponse response = elasticSearchClient.prepareSearch(INSTALLATIONS_INDEX)
+				.setTypes(INSTALLATION_TYPE)
+				.setQuery(QueryBuilders.queryString(searchQuery))
+				.setExplain(true)
 				.execute().actionGet();
 		
-		Iterator<SearchHit> iteratorHit = response.getHits().iterator();
-		while (iteratorHit.hasNext()) {
-			SearchHit searchHit = iteratorHit.next();
+		SearchHit[] iteratorHit = response.getHits().getHits();
+		for(int i = 0; i < iteratorHit.length; i++){
+			SearchHit searchHit = iteratorHit[i];
 			listInstallations.add(mapToInstallation(searchHit));
 		}
 		
