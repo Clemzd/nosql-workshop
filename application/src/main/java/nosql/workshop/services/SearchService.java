@@ -61,16 +61,19 @@ public class SearchService {
 	 */
 	public List<Installation> search(String searchQuery) {
 		List<Installation> listInstallations = new ArrayList<Installation>();
-
-		SearchResponse response = elasticSearchClient.prepareSearch("installations").setQuery(QueryBuilders.multiMatchQuery(searchQuery))
+		
+		SearchResponse response = elasticSearchClient.prepareSearch(INSTALLATIONS_INDEX)
+				.setTypes(INSTALLATION_TYPE)
+				.setQuery(QueryBuilders.queryString(searchQuery))
+				.setExplain(true)
 				.execute().actionGet();
-
-		Iterator<SearchHit> iteratorHit = response.getHits().iterator();
-		while (iteratorHit.hasNext()) {
-			SearchHit searchHit = iteratorHit.next();
+		
+		SearchHit[] iteratorHit = response.getHits().getHits();
+		for(int i = 0; i < iteratorHit.length; i++){
+			SearchHit searchHit = iteratorHit[i];
 			listInstallations.add(mapToInstallation(searchHit));
 		}
-
+		
 		return listInstallations;
 	}
 
