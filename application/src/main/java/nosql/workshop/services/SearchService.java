@@ -57,8 +57,19 @@ public class SearchService {
 	 * @return la listes de installations
 	 */
 	public List<Installation> search(String searchQuery) {
-		// TODO codez le service
-		throw new UnsupportedOperationException();
+		List<Installation> listInstallations = new ArrayList<Installation>();
+		
+		SearchResponse response = elasticSearchClient.prepareSearch("installations")
+				.setQuery(QueryBuilders.multiMatchQuery(searchQuery))
+				.execute().actionGet();
+		
+		Iterator<SearchHit> iteratorHit = response.getHits().iterator();
+		while (iteratorHit.hasNext()) {
+			SearchHit searchHit = iteratorHit.next();
+			listInstallations.add(mapToInstallation(searchHit));
+		}
+		
+		return listInstallations;
 	}
 
 	/**
@@ -93,8 +104,10 @@ public class SearchService {
 
 	public List<TownSuggest> suggestTownName(String townName) {
 		List<TownSuggest> listTownSuggest = new ArrayList<TownSuggest>();
-		SearchResponse response = elasticSearchClient.prepareSearch("towns")
+		
+		SearchResponse response = elasticSearchClient.prepareSearch(TOWNS_INDEX)
 				.setQuery(QueryBuilders.queryString("townName:" + townName + "*")).execute().actionGet();
+		
 		Iterator<SearchHit> iteratorHit = response.getHits().iterator();
 		while (iteratorHit.hasNext()) {
 			SearchHit searchHit = iteratorHit.next();
@@ -104,15 +117,21 @@ public class SearchService {
 	}
 
 	public Double[] getTownLocation(String townName) {
-		SearchResponse response = elasticSearchClient.prepareSearch("towns").setTypes("town")
-				.setQuery(QueryBuilders.queryString("townName:" + townName)).execute()
+		SearchResponse response = elasticSearchClient.prepareSearch(TOWNS_INDEX).setTypes(TOWN_TYPE)
+				.setQuery(QueryBuilders.matchQuery("townName", townName))
+				.addField("location")
+				.execute()
 				.actionGet();
 
 		SearchHits searchHits = response.getHits();
 		// by default we set the location to Carquefou
 		Double[] location = new Double[] { -1.49295, 47.29692 };
 		if (searchHits.getHits().length > 0) {
-			location = mapToTownSuggest(searchHits.getHits()[0]).getLocation();
+			List<Object> listValues = searchHits.getHits()[0].field("location").values();
+			location[0] = (Double)listValues.get(0);
+			location[1] = (Double)listValues.get(1);
+		} else {
+			throw new UnsupportedOperationException();
 		}
 
 		return location;
