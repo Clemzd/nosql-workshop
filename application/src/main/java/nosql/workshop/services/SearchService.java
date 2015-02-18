@@ -11,6 +11,7 @@ import nosql.workshop.model.Installation;
 import nosql.workshop.model.suggest.TownSuggest;
 
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -18,6 +19,8 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,17 +61,16 @@ public class SearchService {
 	 */
 	public List<Installation> search(String searchQuery) {
 		List<Installation> listInstallations = new ArrayList<Installation>();
-		
-		SearchResponse response = elasticSearchClient.prepareSearch("installations")
-				.setQuery(QueryBuilders.multiMatchQuery(searchQuery))
+
+		SearchResponse response = elasticSearchClient.prepareSearch("installations").setQuery(QueryBuilders.multiMatchQuery(searchQuery))
 				.execute().actionGet();
-		
+
 		Iterator<SearchHit> iteratorHit = response.getHits().iterator();
 		while (iteratorHit.hasNext()) {
 			SearchHit searchHit = iteratorHit.next();
 			listInstallations.add(mapToInstallation(searchHit));
 		}
-		
+
 		return listInstallations;
 	}
 
@@ -87,49 +89,45 @@ public class SearchService {
 		}
 	}
 
-	/**
-	 * Transforme un résultat de recherche ES en objet installation.
-	 *
-	 * @param searchHit
-	 *            l'objet ES.
-	 * @return l'installation.
-	 */
-	private TownSuggest mapToTownSuggest(SearchHit searchHit) {
-		try {
-			return objectMapper.readValue(searchHit.getSourceAsString(), TownSuggest.class);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public List<TownSuggest> suggestTownName(String townName) {
 		List<TownSuggest> listTownSuggest = new ArrayList<TownSuggest>();
-		
+
+		CompletionSuggestionBuilder completionSuggestionBuilder = new CompletionSuggestionBuilder(TOWNS_INDEX);
+		completionSuggestionBuilder.text(townName);
+		completionSuggestionBuilder.field("townNameSuggest");
+
 		SearchResponse response = elasticSearchClient.prepareSearch(TOWNS_INDEX)
-				.setQuery(QueryBuilders.queryString("townName:" + townName + "*")).execute().actionGet();
+				.setTypes("completion")
+				.setQuery(QueryBuilders.matchAllQuery())
+				.addSuggestion(completionSuggestionBuilder)
+				.execute().actionGet();
+
+		CompletionSuggestion completionSuggestion = response.getSuggest().getSuggestion("towns");
 		
-		Iterator<SearchHit> iteratorHit = response.getHits().iterator();
-		while (iteratorHit.hasNext()) {
-			SearchHit searchHit = iteratorHit.next();
-			listTownSuggest.add(mapToTownSuggest(searchHit));
-		}
+		Iterator<CompletionSuggestion.Entry.Option> iterator = completionSuggestion.iterator().next().getOptions().iterator();
+        while (iterator.hasNext()){
+            try {
+            	listTownSuggest.add(objectMapper.readValue(iterator.next().getPayloadAsString(), TownSuggest.class));
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
+        }
+        
 		return listTownSuggest;
 	}
 
 	public Double[] getTownLocation(String townName) {
 		SearchResponse response = elasticSearchClient.prepareSearch(TOWNS_INDEX).setTypes(TOWN_TYPE)
-				.setQuery(QueryBuilders.matchQuery("townName", townName))
-				.addField("location")
-				.execute()
-				.actionGet();
+				.setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setQuery(QueryBuilders.matchQuery("townName", townName))
+				.addField("location").execute().actionGet();
 
 		SearchHits searchHits = response.getHits();
 		// by default we set the location to Carquefou
 		Double[] location = new Double[] { -1.49295, 47.29692 };
 		if (searchHits.getHits().length > 0) {
 			List<Object> listValues = searchHits.getHits()[0].field("location").values();
-			location[0] = (Double)listValues.get(0);
-			location[1] = (Double)listValues.get(1);
+			location[0] = (Double) listValues.get(0);
+			location[1] = (Double) listValues.get(1);
 		} else {
 			throw new UnsupportedOperationException();
 		}

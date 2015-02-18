@@ -6,6 +6,8 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import nosql.workshop.batch.elasticsearch.util.ElasticSearchBatchUtils;
 
@@ -48,14 +50,23 @@ public class ImportTowns {
 		String townName = split[1].replaceAll("\"", "");
 		Double longitude = Double.valueOf(split[6]);
 		Double latitude = Double.valueOf(split[7]);
+		Double[] location = { longitude, latitude };
+
+
+		Map<String, Object> globalMap = new HashMap<String, Object>();
+		globalMap.put("townName", townName);
+		globalMap.put("location", location);
+
+		Map<String, Object> townNameSuggestContent = new HashMap<String, Object>();
+		townNameSuggestContent.put("input", townName);
+		townNameSuggestContent.put("output", townName);
 		
-		try {
-			bulkRequest.add(elasticSearchClient.prepareIndex("towns", "town").setSource(
-					jsonBuilder().startObject().field("townName", townName)
-												.field("location", new Double[] { longitude, latitude })
-							.endObject()));
-		} catch (IOException e) {
-            throw new RuntimeException(e);
-		}
+		Map<String, Object> playLoadContent = new HashMap<String, Object>();
+		playLoadContent.put("townName", townName);
+		playLoadContent.put("location", location);
+		townNameSuggestContent.put("payload", playLoadContent);
+		globalMap.put("townNameSuggest", townNameSuggestContent);
+		
+		bulkRequest.add(elasticSearchClient.prepareIndex("towns", "town").setSource(globalMap));
 	}
 }

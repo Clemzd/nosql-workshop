@@ -25,53 +25,44 @@ import static nosql.workshop.batch.elasticsearch.util.ElasticSearchBatchUtils.*;
  */
 public class MongoDbToElasticsearch {
 
-    public static void main(String[] args) throws UnknownHostException {
+	public static void main(String[] args) throws UnknownHostException {
 
-        MongoClient mongoClient = null;
+		MongoClient mongoClient = null;
 
-        long startTime = System.currentTimeMillis();
-        try (Client elasticSearchClient = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", "TheBestTocard")
-				.build()).addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));){
-        	
-//            checkIndexExists("installations", elasticSearchClient);
+		long startTime = System.currentTimeMillis();
+		try (Client elasticSearchClient = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", "TheBestTocard")
+				.build()).addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));) {
 
-            mongoClient = new MongoClient();
+			// checkIndexExists("installations", elasticSearchClient);
 
-            // cursor all database objects from mongo db
-            DBCursor cursor = ElasticSearchBatchUtils.getMongoCursorToAllInstallations(mongoClient);
+			mongoClient = new MongoClient();
 
-            BulkRequestBuilder bulkRequest = elasticSearchClient.prepareBulk();
-            
+			// cursor all database objects from mongo db
+			DBCursor cursor = ElasticSearchBatchUtils.getMongoCursorToAllInstallations(mongoClient);
 
-            while (cursor.hasNext()) {
-                DBObject object = cursor.next();
+			BulkRequestBuilder bulkRequest = elasticSearchClient.prepareBulk();
 
-                String objectId = (String) object.get("_id");
-                object.removeField("dateMiseAJourFiche");
+			while (cursor.hasNext()) {
+				DBObject object = cursor.next();
 
-                try {
-					bulkRequest.add(elasticSearchClient.prepareIndex("installations", "installation")
-							.setSource(jsonBuilder()
-										.startObject()
-											.field(objectId, object)
-										.endObject()
-							));
-				} catch (IOException e) {
-		             throw new RuntimeException(e);
-				}
-            }
-            BulkResponse bulkItemResponses = bulkRequest.execute().actionGet();
+				String objectId = (String) object.get("_id");
+				object.removeField("dateMiseAJourFiche");
 
-            dealWithFailures(bulkItemResponses);
+				bulkRequest.add(elasticSearchClient.prepareIndex("installations", "installation", objectId)
+						.setSource(object.toMap()));
 
-            System.out.println("Inserted all documents in " + (System.currentTimeMillis() - startTime) + " ms");
-        } finally {
-            if (mongoClient != null) {
-                mongoClient.close();
-            }
-        }
+			}
+			BulkResponse bulkItemResponses = bulkRequest.execute().actionGet();
 
+			dealWithFailures(bulkItemResponses);
 
-    }
+			System.out.println("Inserted all documents in " + (System.currentTimeMillis() - startTime) + " ms");
+		} finally {
+			if (mongoClient != null) {
+				mongoClient.close();
+			}
+		}
+
+	}
 
 }
