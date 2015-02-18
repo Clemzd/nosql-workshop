@@ -15,10 +15,13 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -72,8 +75,20 @@ public class SearchService {
     }
 
     public List<TownSuggest> suggestTownName(String townName){
-        // TODO codez le service
-        throw new UnsupportedOperationException();
+    	List<TownSuggest> listTownSuggest = new ArrayList<TownSuggest>();
+    	SearchResponse response = elasticSearchClient.prepareSearch("towns")
+    		.setQuery(QueryBuilders.queryString("townName:" + townName + "*"))
+    		.execute().actionGet();
+    	Iterator<SearchHit> iteratorHit = response.getHits().iterator();
+		try {
+	    	while(iteratorHit.hasNext()){
+	    		SearchHit searchHit = iteratorHit.next();
+				listTownSuggest.add(objectMapper.readValue(searchHit.getSourceAsString(), TownSuggest.class));
+	    	}
+		} catch (IOException e) {
+			 throw new RuntimeException(e);
+		}
+    	return listTownSuggest;
     }
 
     public Double[] getTownLocation(String townName) {
