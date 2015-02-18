@@ -13,8 +13,6 @@ db.installations.update({_id : "440260022"}, {$set : {"location.coordinates" : [
 db.installations.update({_id : "440260021"}, {$set : {"location.coordinates" : [-1.5035390000000461, 47.302032]}})
 db.installations.update({_id : "440260020"}, {$set : {"location.coordinates" : [-1.4256482000000688, 47.2970975]}})
 db.installations.update({_id : "440260016"}, {$set : {"location.coordinates" : [-1.5011335000000372, 47.3043029]}})
-db.installations.update({_id : "440260005"}, {$set : {"location.coordinates" : [-1.486981199999945647.2951387, ]}})
-db.installations.update({_id : "440260023"}, {$set : {"location.coordinates" : [-1.483686300000044947.2827379, ]}})
 db.installations.update({_id : "440260011"}, {$set : {"location.coordinates" : [-1.525601599999959, 47.3008059]}})
 db.installations.update({_id : "440260028"}, {$set : {"location.coordinates" : [-1.4863361999999825, 47.27432229999999]}})
 db.installations.update({_id : "440260029"}, {$set : {"location.coordinates" : [-1.42485400, 47.30368800]}})

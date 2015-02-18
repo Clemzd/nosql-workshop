@@ -97,7 +97,7 @@ public class InstallationService {
 	 */
 	public Installation installationWithMaxEquipments() {
 		Installation installation = this.installations
-				.aggregate("{$project:{name:1, adresse:1, equipements:1, location:1, multiCommune:1,"
+				.aggregate("{$project:{nom:1, adresse:1, equipements:1, location:1, multiCommune:1,"
 						+ "nbPlacesParking:1, nbPplacesParkingHandicapes:1, nbEqu:{$size:'$equipements'}}}")
 				.and("{$sort:{nbEqu:-1}}")
 				.and("{$limit:1}")
@@ -112,7 +112,11 @@ public class InstallationService {
 	 * @return le nombre d'installations par activité.
 	 */
 	public List<CountByActivity> countByActivity() {
-		return Arrays.asList(new CountByActivity());
+		return this.installations.aggregate("{ $unwind : '$equipements' }")
+			.and("{ $unwind : '$equipements.activites' }")
+			.and("{ $group : { _id: '$equipements.activites', total : { $sum:1 } } }")
+			.and("{ $project : { _id : 0, activite : '$_id', total : 1 } }")
+			.as(CountByActivity.class);
 	}
 
 	public double averageEquipmentsPerInstallation() {
@@ -160,7 +164,7 @@ public class InstallationService {
 	 */
 	public List<Installation> geosearch(double lat, double lng, double distance) {
 		List<Installation> list = new ArrayList<Installation>();
-		MongoCursor<Installation> cursor = this.installations.find("{location: {$near: {$geometry: {type: 'Point', coordinates : [#, #]}, $maxDistance: #}}}}", lng, lat, distance).as(Installation.class);
+		MongoCursor<Installation> cursor = this.installations.find("{location: {$near: {$geometry: {type: 'Point', coordinates : [#, #]}, $maxDistance: #}}}", lng, lat, distance).as(Installation.class);
 		while (cursor.hasNext()) {
 			list.add(cursor.next());
 		}
