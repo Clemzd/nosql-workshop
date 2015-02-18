@@ -1,11 +1,17 @@
 package nosql.workshop.batch.elasticsearch;
 
 import com.mongodb.*;
+
 import nosql.workshop.batch.elasticsearch.util.ElasticSearchBatchUtils;
+
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.*;
+
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 
 import java.io.IOException;
@@ -24,16 +30,18 @@ public class MongoDbToElasticsearch {
         MongoClient mongoClient = null;
 
         long startTime = System.currentTimeMillis();
-        try (Client elasticSearchClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));){
-            checkIndexExists("installations", elasticSearchClient);
+        try (Client elasticSearchClient = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", "TheBestTocard")
+				.build()).addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));){
+        	
+//            checkIndexExists("installations", elasticSearchClient);
 
             mongoClient = new MongoClient();
 
             // cursor all database objects from mongo db
             DBCursor cursor = ElasticSearchBatchUtils.getMongoCursorToAllInstallations(mongoClient);
 
-            // TODO prepare bulk insert to Elastic Search
-            BulkRequestBuilder bulkRequest = null;
+            BulkRequestBuilder bulkRequest = elasticSearchClient.prepareBulk();
+            
 
             while (cursor.hasNext()) {
                 DBObject object = cursor.next();
@@ -41,7 +49,16 @@ public class MongoDbToElasticsearch {
                 String objectId = (String) object.get("_id");
                 object.removeField("dateMiseAJourFiche");
 
-                // TODO codez l'écriture du document dans ES
+                try {
+					bulkRequest.add(elasticSearchClient.prepareIndex("installations", "installation")
+							.setSource(jsonBuilder()
+										.startObject()
+											.field(objectId, object)
+										.endObject()
+							));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
             }
             BulkResponse bulkItemResponses = bulkRequest.execute().actionGet();
 
